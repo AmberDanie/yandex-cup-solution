@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">yandex_cup_solution</string>
+    <string name="undo_previous_action">Undo the previous action</string>
+    <string name="return_cancelled_action">Return cancelled action</string>
+    <string name="delete_current_frame">Delete current frame</string>
+    <string name="create_new_frame">Create new frame</string>
+    <string name="open_all_frames">Open all frames</string>
+    <string name="pause_the_animation">Pause the animation</string>
+    <string name="resume_the_animation">Resume the animation</string>
+    <string name="choose_pencil">Choose pencil</string>
+    <string name="choose_brush">Choose brush</string>
+    <string name="background_image">background image</string>
+    <string name="choose_eraser">Choose eraser</string>
+    <string name="choose_instruments">Choose instruments</string>
+    <string name="open_all_colors">Open all colors</string>
+    <string name="square">Square</string>
+    <string name="circle">Circle</string>
+    <string name="triangle">Triangle</string>
+    <string name="arrow_up">Arrow Up</string>
+</resources>
