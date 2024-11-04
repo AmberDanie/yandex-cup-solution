@@ -16,6 +16,11 @@ sealed interface ViewModelEvent {
             data object DeleteAll : DeleteFrameEvent
         }
 
+        sealed interface GenerateFrames : TopPanelEvent {
+            data object OpenDialog : GenerateFrames
+            class AddRandomFrames(val count: Int) : GenerateFrames
+        }
+
         data object AddFrame : TopPanelEvent
         data object DuplicateFrame : TopPanelEvent
         data object Pause : TopPanelEvent

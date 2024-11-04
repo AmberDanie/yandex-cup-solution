@@ -57,9 +57,7 @@ fun ColorPickerDialog(
                             .background(Color.Transparent)
                     ) {
                         if (isExpanded) {
-                            ExpandedColorsLayout(
-
-                            ) { color ->
+                            ExpandedColorsLayout { color ->
                                 onViewModelEvent(
                                     ViewModelEvent.BottomPanelEvent.ColorPicker.ChooseColor(
                                         color
@@ -160,7 +158,7 @@ fun ColorRow(
             .padding(vertical = 32.dp)
             .padding(start = 6.dp)
     ) {
-        colorList.forEachIndexed { index, color ->
+        colorList.forEach { color ->
             Canvas(
                 modifier = Modifier.clickable {
                     chooseColor(color)

@@ -18,22 +18,30 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.text.isDigitsOnly
 import com.example.yandex_cup_solution.R
 import com.example.yandex_cup_solution.domain.CanvasMode
 import com.example.yandex_cup_solution.domain.ViewModelEvent
@@ -94,7 +102,13 @@ fun MainScreen(
 
         DeleteDialog(
             onFrameInteract = onViewModelEvent,
-            isVisible = uiState.deleteDialogIsExpanded)
+            isVisible = uiState.deleteDialogIsExpanded
+        )
+
+        GenerateFramesDialog(
+            isVisible = uiState.generateFramesDialogIsExpanded,
+            onViewModelEvent = onViewModelEvent
+        )
 
         BottomPanelSlider(uiState, onViewModelEvent)
 
@@ -112,6 +126,85 @@ fun MainScreen(
 }
 
 @Composable
+fun GenerateFramesDialog(
+    isVisible: Boolean,
+    onViewModelEvent: (ViewModelEvent.TopPanelEvent.GenerateFrames) -> Unit
+) {
+    val inputData = remember { mutableStateOf("") }
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = slideInVertically() + fadeIn(),
+        exit = slideOutVertically() + fadeOut()
+    ) {
+        Dialog(
+            onDismissRequest = { onViewModelEvent(ViewModelEvent.TopPanelEvent.GenerateFrames.OpenDialog) },
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(start = 18.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier
+                        .padding(bottom = 100.dp)
+                        .background(Color.Transparent)
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = stringResource(R.string.generated_frames_count),
+                            fontSize = 24.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth().padding(
+                                top = 32.dp, start = 32.dp, end = 32.dp
+                            )
+                        )
+                        TextField(
+                            value = inputData.value,
+                            onValueChange = { char ->
+                                inputData.value += char
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        )
+                        Button(
+                            onClick = {
+                                onViewModelEvent(
+                                    ViewModelEvent.TopPanelEvent.GenerateFrames.AddRandomFrames(
+                                        if (inputData.value.isDigitsOnly() && inputData.value.toInt() > 0) {
+                                            inputData.value.toInt()
+                                        } else {
+                                            0
+                                        }
+                                    )
+                                )
+                                inputData.value = ""
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colorResource(id = R.color.white)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Text(text = stringResource(R.string.generate))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun BoxScope.BottomPanelSlider(
     uiState: CanvasState,
     onViewModelEvent: (ViewModelEvent) -> Unit
@@ -123,7 +216,6 @@ fun BoxScope.BottomPanelSlider(
             uiState.lineWidth
         },
         onValueChange = { value ->
-            val a = value
             onViewModelEvent(ViewModelEvent.SliderEvent(value, uiState.currentMode))
         },
         valueRange = 5f..100f,
@@ -173,7 +265,8 @@ fun DeleteDialog(
                             color = colorResource(id = R.color.is_active),
                             fontSize = 28.sp,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
                                 .clickable {
                                     onFrameInteract(ViewModelEvent.TopPanelEvent.DeleteFrameEvent.DeleteOne)
                                 }
@@ -184,7 +277,8 @@ fun DeleteDialog(
                             color = colorResource(id = R.color.red),
                             fontSize = 28.sp,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
                                 .clickable {
                                     onFrameInteract(ViewModelEvent.TopPanelEvent.DeleteFrameEvent.DeleteAll)
                                 }
@@ -235,7 +329,7 @@ fun InstrumentsLayout(
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
+        modifier = modifier
             .width(200.dp)
             .padding(16.dp)
     ) {

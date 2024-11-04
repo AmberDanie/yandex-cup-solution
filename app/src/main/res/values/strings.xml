@@ -20,4 +20,6 @@
     <string name="duplicate_current_frame">Duplicate current frame</string>
     <string name="delete_this_frame">Delete current frame</string>
     <string name="delete_all_frames">Delete all frames</string>
+    <string name="generated_frames_count">Generated frames count</string>
+    <string name="generate">Generate</string>
 </resources>

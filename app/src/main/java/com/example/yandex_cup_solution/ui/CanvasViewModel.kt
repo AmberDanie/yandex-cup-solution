@@ -2,6 +2,7 @@ package com.example.yandex_cup_solution.ui
 
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -9,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.yandex_cup_solution.data.CanvasRepository
 import com.example.yandex_cup_solution.domain.CanvasMode
 import com.example.yandex_cup_solution.domain.ViewModelEvent
+import com.example.yandex_cup_solution.utils.addTriangle
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Stack
+import java.util.concurrent.ThreadLocalRandom
 
 class CanvasViewModel @AssistedInject constructor(
     @Assisted savedStateHandle: SavedStateHandle,
@@ -91,6 +94,7 @@ class CanvasViewModel @AssistedInject constructor(
     private suspend fun topPanelEvents(viewModelEvent: ViewModelEvent.TopPanelEvent) {
         withContext(Dispatchers.IO) {
             when (viewModelEvent) {
+                is ViewModelEvent.TopPanelEvent.GenerateFrames -> generateEvents(viewModelEvent)
                 is ViewModelEvent.TopPanelEvent.BackArrow -> undoPrevious()
                 is ViewModelEvent.TopPanelEvent.ForwardArrow -> returnPrevious()
                 is ViewModelEvent.TopPanelEvent.DeleteFrameEvent -> deleteEvents(viewModelEvent)
@@ -99,6 +103,15 @@ class CanvasViewModel @AssistedInject constructor(
                 ViewModelEvent.TopPanelEvent.Pause -> onPause()
                 ViewModelEvent.TopPanelEvent.Resume -> onResume()
             }
+        }
+    }
+
+    private suspend fun generateEvents(viewModelEvent: ViewModelEvent.TopPanelEvent.GenerateFrames) {
+        when (viewModelEvent) {
+            is ViewModelEvent.TopPanelEvent.GenerateFrames.OpenDialog -> openGenerateDialog()
+            is ViewModelEvent.TopPanelEvent.GenerateFrames.AddRandomFrames -> generateFrames(
+                viewModelEvent.count
+            )
         }
     }
 
@@ -143,6 +156,46 @@ class CanvasViewModel @AssistedInject constructor(
                 )
             }
         }
+    }
+
+    private suspend fun openGenerateDialog() {
+        withContext(Dispatchers.IO) {
+            _uiState.update {
+                it.copy(
+                    generateFramesDialogIsExpanded = !it.generateFramesDialogIsExpanded
+                )
+            }
+        }
+    }
+
+    private suspend fun generateFrames(count: Int) {
+        withContext(Dispatchers.IO) {
+            openGenerateDialog()
+            lastChosenMode.value = _uiState.value.currentMode
+            _uiState.update {
+                it.copy(
+                    currentMode = CanvasMode.Disabled
+                )
+            }
+            repeat(count) {
+                generateFrame()
+            }
+            updateCurrentMode(lastChosenMode.value)
+        }
+    }
+
+    private suspend fun generateFrame() {
+        val rand = ThreadLocalRandom.current()
+        val x = rand.nextDouble(0.0, 1500.0)
+        val y = rand.nextDouble(0.0, 2000.0)
+        val frame = SnapshotStateList<CanvasFiguresData>()
+        frame.addTriangle(
+            offset = Offset(x.toFloat(), y.toFloat()),
+            color = _uiState.value.chosenColor,
+            lineWidth = rand.nextDouble(3.0, 100.0).toFloat(),
+            alpha = 1f
+        )
+        canvasRepository.addAnimationFrame(frame)
     }
 
     private suspend fun expandDeleteDialog() {

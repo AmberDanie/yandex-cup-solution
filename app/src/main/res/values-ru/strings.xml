@@ -21,4 +21,6 @@
     <string name="duplicate_current_frame">Дублировать текущий кадр</string>
     <string name="delete_this_frame">Удалить текущий кадр</string>
     <string name="delete_all_frames">Удалить все кадры</string>
+    <string name="generated_frames_count">Сгенерированные кадры</string>
+    <string name="generate">Сгенерировать</string>
 </resources>

@@ -9,6 +9,7 @@ data class CanvasState(
     val paletteIsExpanded: Boolean = false,
     val instrumentsIsExpanded: Boolean = false,
     val deleteDialogIsExpanded: Boolean = false,
+    val generateFramesDialogIsExpanded: Boolean = false,
     val chosenInstrument: CanvasFigure? = null,
     val chosenColor: Color = Color(0xFF1976D2),
     val currentMode: CanvasMode = CanvasMode.PaintMode.Pencil,

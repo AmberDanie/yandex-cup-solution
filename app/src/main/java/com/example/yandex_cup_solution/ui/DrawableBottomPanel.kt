@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -85,13 +86,13 @@ fun DrawableBottomPanel(
 }
 
 @Composable
-private fun iconTintColor(currentMode: CanvasMode, iconMode: CanvasMode) = colorResource(
-    id = when (currentMode) {
-        is CanvasMode.Disabled -> R.color.is_disabled
-        iconMode -> R.color.green
-        else -> R.color.is_active
+private fun iconTintColor(currentMode: CanvasMode, iconMode: CanvasMode): Color {
+    return when (currentMode) {
+        is CanvasMode.Disabled -> colorResource(id = R.color.is_disabled)
+        iconMode -> colorResource(id = R.color.green)
+        else -> MaterialTheme.colorScheme.onBackground
     }
-)
+}
 
 @Composable
 fun PencilIcon(

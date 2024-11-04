@@ -14,8 +14,6 @@ internal object CanvasColors {
     val black = Color(0xFF000000)
     val white = Color(0xFFFFFFFF)
     val grey = Color(0xFF555454).copy(alpha = 0.16f)
-    val grey2 = Color(0xFF8B8B8B)
-    val black2 = Color(0xFF1C1C1C)
 
     val dullColors = listOf(
         Color(0xFFFFFECC),
