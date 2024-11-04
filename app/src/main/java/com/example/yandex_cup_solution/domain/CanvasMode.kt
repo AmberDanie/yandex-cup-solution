@@ -11,4 +11,6 @@ sealed interface CanvasMode {
     data object Instruments : CanvasMode
 
     data object ColorPicker : CanvasMode
+
+    data object Disabled : CanvasMode
 }

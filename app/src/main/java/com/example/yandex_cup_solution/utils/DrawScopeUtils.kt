@@ -9,18 +9,19 @@ import com.example.yandex_cup_solution.ui.PathData
 import com.example.yandex_cup_solution.ui.SquareData
 import com.example.yandex_cup_solution.ui.TriangleData
 
-fun DrawScope.drawPath(figureData: PathData) {
+fun DrawScope.drawPath(figureData: PathData, alphaOverride: Float = 1f) {
     drawPath(
         path = figureData.path,
         color = figureData.color,
         style = Stroke(
             width = figureData.lineWidth,
             cap = figureData.cap
-        )
+        ),
+        alpha = alphaOverride
     )
 }
 
-fun DrawScope.drawSquare(figureData: SquareData) {
+fun DrawScope.drawSquare(figureData: SquareData, alphaOverride: Float = 1f) {
     drawRoundRect(
         color = figureData.color,
         style = Stroke(
@@ -28,11 +29,11 @@ fun DrawScope.drawSquare(figureData: SquareData) {
         ),
         size = Size(figureData.lineWidth * 10, figureData.lineWidth * 10),
         topLeft = figureData.offset,
-        alpha = figureData.alpha
+        alpha = if (alphaOverride != 1f) alphaOverride else figureData.alpha
     )
 }
 
-fun DrawScope.drawCircle(figureData: CircleData) {
+fun DrawScope.drawCircle(figureData: CircleData, alphaOverride: Float = 1f) {
     drawCircle(
         color = figureData.color,
         style = Stroke(
@@ -40,11 +41,11 @@ fun DrawScope.drawCircle(figureData: CircleData) {
         ),
         radius = figureData.lineWidth * 4f,
         center = figureData.offset,
-        alpha = figureData.alpha
+        alpha = if (alphaOverride != 1f) alphaOverride else figureData.alpha
     )
 }
 
-fun DrawScope.drawTriangle(figureData: TriangleData) {
+fun DrawScope.drawTriangle(figureData: TriangleData, alphaOverride: Float = 1f) {
     val center = figureData.offset
     val size = Size(figureData.lineWidth, figureData.lineWidth)
     val path = Path().apply {
@@ -59,6 +60,6 @@ fun DrawScope.drawTriangle(figureData: TriangleData) {
         style = Stroke(
             width = figureData.lineWidth / 1.5f
         ),
-        alpha = figureData.alpha
+        alpha = if (alphaOverride != 1f) alphaOverride else figureData.alpha
     )
 }

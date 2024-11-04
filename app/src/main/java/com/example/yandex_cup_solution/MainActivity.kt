@@ -43,11 +43,12 @@ class MainActivity : ComponentActivity() {
                         MainScreen(
                             uiState = uiState.value,
                             cleanStack = { canvasViewModel.cleanStack() },
+                            onPauseResumeClick = { interaction -> canvasViewModel.interactPauseAndPlay(interaction) },
                             onFrameInteract = { interaction -> canvasViewModel.interactFrames(interaction) },
                             onFrameArrowClick = { direction -> canvasViewModel.onFrameArrowClick(direction) },
                             onInstrumentsClick = { figure -> canvasViewModel.onInstrumentsClick(figure) },
                             onUpdateFrameFigures = { newList -> canvasViewModel.onUpdateFrameFigures(newList) },
-                            updateLineWidth = { width -> canvasViewModel.updateLineWidth(width) },
+                            updateSliderValue = { mode, width -> canvasViewModel.sliderValueUpdate(mode, width) },
                             onModeClick = { mode -> canvasViewModel.updateCurrentMode(mode) },
                             onColorPaletteClick = { canvasViewModel.onColorPaletteClick() },
                             onColorPaletteExpand = { canvasViewModel.onColorPaletteExpand() },

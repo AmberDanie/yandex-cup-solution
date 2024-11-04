@@ -30,6 +30,7 @@ fun DrawableCanvas(
     chosenColor: Color,
     chosenFigure: CanvasFigure?,
     onUpdateFrameFigures: (SnapshotStateList<CanvasFiguresData>) -> Unit,
+    previousFrame: SnapshotStateList<CanvasFiguresData>,
     currentFrame: SnapshotStateList<CanvasFiguresData>,
     modifier: Modifier = Modifier,
 ) {
@@ -58,7 +59,8 @@ fun DrawableCanvas(
                     if (currentFrame.isNotEmpty()) {
                         val lastAdded = currentFrame.last()
                         if ((lastAdded is CanvasInstrument && lastAdded.alpha == 0.5f)
-                            || (lastAdded is PathData && lastAdded.alpha == 0.5f)) {
+                            || (lastAdded is PathData && lastAdded.alpha == 0.5f)
+                        ) {
                             currentFrame.removeLast()
                         }
                     }
@@ -68,10 +70,17 @@ fun DrawableCanvas(
                         }
 
                         CanvasMode.Instruments -> {
-                            currentFrame.addFigure(chosenFigure, tempOffset, color, lineWidth, 1f)
+                            currentFrame.addFigure(
+                                chosenFigure,
+                                tempOffset,
+                                color,
+                                lineWidth,
+                                1f
+                            )
                         }
 
-                        CanvasMode.ColorPicker -> { /* IMPOSSIBLE STATE */ }
+                        CanvasMode.ColorPicker,
+                        CanvasMode.Disabled -> { /* IMPOSSIBLE STATE */ }
                     }
                     onUpdateFrameFigures(currentFrame)
                 }
@@ -103,11 +112,21 @@ fun DrawableCanvas(
                         currentFrame.addFigure(chosenFigure, tempOffset, color, lineWidth, 0.5f)
                     }
 
-                    CanvasMode.ColorPicker -> { /* IMPOSSIBLE STATE */ }
+                    CanvasMode.ColorPicker,
+                    CanvasMode.Disabled -> { /* IMPOSSIBLE STATE */ }
                 }
             }
         }
     ) {
+        previousFrame.forEach { figureData ->
+            when (figureData) {
+                is PathData -> drawPath(figureData, alphaOverride = 0.5f)
+                is SquareData -> drawSquare(figureData, alphaOverride = 0.5f)
+                is CircleData -> drawCircle(figureData, alphaOverride = 0.5f)
+                is TriangleData -> drawTriangle(figureData, alphaOverride = 0.5f)
+            }
+        }
+
         currentFrame.forEach { figureData ->
             when (figureData) {
                 is PathData -> drawPath(figureData)

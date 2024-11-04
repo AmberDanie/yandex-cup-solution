@@ -1,6 +1,7 @@
 package com.example.yandex_cup_solution.ui
 
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -25,7 +26,9 @@ data class CanvasState(
     val chosenColor: Color = Color(0xFF1976D2),
     val currentMode: CanvasMode = CanvasMode.PaintMode.Pencil,
     val lineWidth: Float = 50f,
+    val animationSpeed: Long = 1000,
     val currentFrame: SnapshotStateList<CanvasFiguresData> = SnapshotStateList(),
+    val previousFrame: SnapshotStateList<CanvasFiguresData> = SnapshotStateList(),
     val allFrames: List<SnapshotStateList<CanvasFiguresData>> = listOf(),
     val stackSize: Int = 0
 ) {
@@ -38,8 +41,12 @@ enum class ArrowMove {
     BACK, FORWARD
 }
 
-enum class FrameInteractor {
-    DELETE, ADD
+enum class FrameInteraction {
+    DELETE, ADD, DUPLICATE
+}
+
+enum class PauseResumeInteraction {
+    PAUSE, RESUME
 }
 
 class CanvasViewModel @AssistedInject constructor(
@@ -62,17 +69,90 @@ class CanvasViewModel @AssistedInject constructor(
                 _uiState.update {
                     it.copy(
                         allFrames = frames,
-                        currentFrame = frames.lastOrNull() ?: SnapshotStateList()
+                        currentFrame = frames.lastOrNull() ?: SnapshotStateList(),
+                        previousFrame = if (frames.size > 1) frames[frames.size - 2] else SnapshotStateList()
                     )
                 }
             }
         }
     }
 
-    fun interactFrames(frameInteraction: FrameInteractor) {
-        when (frameInteraction) {
-            FrameInteractor.DELETE -> deleteFrame()
-            FrameInteractor.ADD -> addFrame()
+    fun sliderValueUpdate(mode: CanvasMode, width: Float) {
+        when (mode) {
+            is CanvasMode.Disabled -> updateAnimationSpeed(width)
+            else -> updateLineWidth(width)
+        }
+    }
+
+    private fun updateAnimationSpeed(width: Float) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    animationSpeed = ((100 - width) * (1000 / 50)).toLong()
+                )
+            }
+        }
+    }
+
+    fun interactPauseAndPlay(pauseResumeInteraction: PauseResumeInteraction) {
+        when (pauseResumeInteraction) {
+            PauseResumeInteraction.PAUSE -> onPause()
+            PauseResumeInteraction.RESUME -> onResume()
+        }
+    }
+
+    private fun onPause() {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    currentMode = lastChosenMode.value,
+                    currentFrame = it.allFrames.lastOrNull() ?: SnapshotStateList()
+                )
+            }
+        }
+    }
+
+    private fun onResume() {
+        viewModelScope.launch {
+            lastChosenMode.update {
+                _uiState.value.currentMode
+            }
+            _uiState.update {
+                it.copy(
+                    currentMode = CanvasMode.Disabled
+                )
+            }
+            while (_uiState.value.currentMode is CanvasMode.Disabled) {
+                _uiState.value.allFrames.forEach { frame ->
+                    if (_uiState.value.currentMode !is CanvasMode.Disabled) {
+                        return@launch
+                    }
+                    _uiState.update {
+                        it.copy(
+                            currentFrame = frame
+                        )
+                    }
+                    delay(_uiState.value.animationSpeed)
+                }
+            }
+        }
+    }
+
+    fun interactFrames(frameInteraction: FrameInteraction) {
+        viewModelScope.launch {
+            when (frameInteraction) {
+                FrameInteraction.DELETE -> deleteFrame()
+                FrameInteraction.ADD -> addFrame()
+                FrameInteraction.DUPLICATE -> duplicateCurrentFrame()
+            }
+            cleanStack()
+        }
+    }
+
+    private fun duplicateCurrentFrame() {
+        viewModelScope.launch {
+            val currentFrame = _uiState.value.currentFrame.toMutableStateList()
+            canvasRepository.addAnimationFrame(currentFrame)
         }
     }
 
@@ -101,9 +181,11 @@ class CanvasViewModel @AssistedInject constructor(
     }
 
     fun onFrameArrowClick(direction: ArrowMove) {
-        when (direction) {
-            ArrowMove.BACK -> undoPrevious()
-            ArrowMove.FORWARD -> returnPrevious()
+        viewModelScope.launch {
+            when (direction) {
+                ArrowMove.BACK -> undoPrevious()
+                ArrowMove.FORWARD -> returnPrevious()
+            }
         }
     }
 
@@ -151,7 +233,7 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
-    fun updateLineWidth(width: Float) {
+    private fun updateLineWidth(width: Float) {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(

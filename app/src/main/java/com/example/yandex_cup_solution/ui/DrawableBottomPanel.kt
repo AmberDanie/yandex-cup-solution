@@ -38,24 +38,38 @@ fun DrawableBottomPanel(
     ) {
         PencilIcon(
             tintColor = iconTintColor(currentMode, CanvasMode.PaintMode.Pencil),
-            modifier = Modifier.clickable { onModeClick(CanvasMode.PaintMode.Pencil) }
+            modifier = Modifier.clickable {
+                if (currentMode !is CanvasMode.Disabled) {
+                    onModeClick(CanvasMode.PaintMode.Pencil)
+                }
+            }
         )
         Spacer(modifier = Modifier.width(16.dp))
         BrushIcon(
             tintColor = iconTintColor(currentMode, CanvasMode.PaintMode.Brush),
-            modifier = Modifier.clickable { onModeClick(CanvasMode.PaintMode.Brush) }
+            modifier = Modifier.clickable {
+                if (currentMode !is CanvasMode.Disabled) {
+                    onModeClick(CanvasMode.PaintMode.Brush)
+                }
+            }
         )
         Spacer(modifier = Modifier.width(16.dp))
         EraseIcon(
             tintColor = iconTintColor(currentMode, CanvasMode.PaintMode.Eraser),
-            modifier = Modifier.clickable { onModeClick(CanvasMode.PaintMode.Eraser) }
+            modifier = Modifier.clickable {
+                if (currentMode !is CanvasMode.Disabled) {
+                    onModeClick(CanvasMode.PaintMode.Eraser)
+                }
+            }
         )
         Spacer(modifier = Modifier.width(16.dp))
         InstrumentsIcon(
             tintColor = iconTintColor(currentMode, CanvasMode.Instruments),
             modifier = Modifier.clickable {
-                onModeClick(CanvasMode.Instruments)
-                onInstrumentsClick(null)
+                if (currentMode !is CanvasMode.Disabled) {
+                    onModeClick(CanvasMode.Instruments)
+                    onInstrumentsClick(null)
+                }
             }
         )
         Spacer(modifier = Modifier.width(16.dp))
@@ -64,8 +78,10 @@ fun DrawableBottomPanel(
             borderColor = colorResource(id = R.color.green),
             isCurrentMode = currentMode == CanvasMode.ColorPicker,
             modifier = Modifier.clickable {
-                onModeClick(CanvasMode.ColorPicker)
-                onColorPaletteClick()
+                if (currentMode !is CanvasMode.Disabled) {
+                    onModeClick(CanvasMode.ColorPicker)
+                    onColorPaletteClick()
+                }
             }
         )
     }
@@ -73,10 +89,10 @@ fun DrawableBottomPanel(
 
 @Composable
 private fun iconTintColor(currentMode: CanvasMode, iconMode: CanvasMode) = colorResource(
-    id = if (currentMode == iconMode) {
-        R.color.green
-    } else {
-        R.color.is_active
+    id = when (currentMode) {
+        is CanvasMode.Disabled -> R.color.is_disabled
+        iconMode -> R.color.green
+        else -> R.color.is_active
     }
 )
 

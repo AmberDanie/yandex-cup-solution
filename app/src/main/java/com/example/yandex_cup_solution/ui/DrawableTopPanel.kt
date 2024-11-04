@@ -17,15 +17,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.yandex_cup_solution.R
+import com.example.yandex_cup_solution.domain.CanvasMode
 
 @Composable
 fun DrawableTopPanel(
     modifier: Modifier = Modifier,
-    onFrameInteract: (FrameInteractor) -> Unit,
+    currentMode: CanvasMode,
+    onFrameInteract: (FrameInteraction) -> Unit,
     onFrameArrowClick: (ArrowMove) -> Unit,
+    onPauseResumeClick: (PauseResumeInteraction) -> Unit,
     forwardIsActive: Boolean,
     backIsActive: Boolean
 ) {
+    val isNotResuming = currentMode !is CanvasMode.Disabled
+
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Bottom,
@@ -33,11 +38,13 @@ fun DrawableTopPanel(
             .fillMaxWidth()
             .padding(start = 20.dp, end = 20.dp, bottom = 32.dp)
     ) {
-        Row {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             BackArrow(
                 isActive = backIsActive,
                 modifier = Modifier.clickable {
-                    if (backIsActive) {
+                    if (backIsActive && isNotResuming) {
                         onFrameArrowClick(ArrowMove.BACK)
                     }
                 }
@@ -46,31 +53,63 @@ fun DrawableTopPanel(
             ForwardArrow(
                 isActive = forwardIsActive,
                 modifier = Modifier.clickable {
-                    if (forwardIsActive) {
+                    if (forwardIsActive && isNotResuming) {
                         onFrameArrowClick(ArrowMove.FORWARD)
                     }
                 }
             )
         }
-        Row {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             DeleteFrameIcon(
+                isActive = isNotResuming,
                 modifier = Modifier.clickable {
-                    onFrameInteract(FrameInteractor.DELETE)
+                    if (isNotResuming) {
+                        onFrameInteract(FrameInteraction.DELETE)
+                    }
                 }
             )
             Spacer(modifier = Modifier.width(16.dp))
             CreateFrameIcon(
+                isActive = isNotResuming,
                 modifier = Modifier.clickable {
-                    onFrameInteract(FrameInteractor.ADD)
+                    if (isNotResuming) {
+                        onFrameInteract(FrameInteraction.ADD)
+                    }
                 }
             )
             Spacer(modifier = Modifier.width(16.dp))
-            OpenFramesIcon()
-        }
-        Row {
-            PauseIcon()
+            DuplicateFrameIcon(
+                isActive = isNotResuming,
+                modifier = Modifier.clickable {
+                    if (isNotResuming) {
+                        onFrameInteract(FrameInteraction.DUPLICATE)
+                    }
+                }
+            )
             Spacer(modifier = Modifier.width(16.dp))
-            ResumeIcon()
+            OpenFramesIcon(
+                isActive = false
+            )
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            PauseIcon(
+                isActive = !isNotResuming,
+                modifier = Modifier.clickable {
+                    if (!isNotResuming) {
+                        onPauseResumeClick(PauseResumeInteraction.PAUSE)
+                    }
+                })
+            Spacer(modifier = Modifier.width(16.dp))
+            ResumeIcon(
+                isActive = isNotResuming,
+                modifier = Modifier.clickable {
+                    if (isNotResuming) {
+                        onPauseResumeClick(PauseResumeInteraction.RESUME)
+                    }
+                }
+            )
         }
     }
 }
@@ -105,11 +144,12 @@ fun ForwardArrow(
 
 @Composable
 fun DeleteFrameIcon(
+    isActive: Boolean,
     modifier: Modifier = Modifier
 ) {
     Icon(
         painter = painterResource(id = R.drawable.ic_bin_32),
-        tint = colorResource(id = R.color.is_active),
+        tint = colorResource(id = if (isActive) R.color.is_active else R.color.is_disabled),
         contentDescription = stringResource(id = R.string.delete_current_frame),
         modifier = modifier
     )
@@ -117,47 +157,65 @@ fun DeleteFrameIcon(
 
 @Composable
 fun CreateFrameIcon(
+    isActive: Boolean,
     modifier: Modifier = Modifier
 ) {
     Icon(
         painter = painterResource(id = R.drawable.ic_file_plus_32),
-        tint = colorResource(id = R.color.is_active),
+        tint = colorResource(id = if (isActive) R.color.is_active else R.color.is_disabled),
         contentDescription = stringResource(id = R.string.create_new_frame),
         modifier = modifier
     )
 }
 
 @Composable
+fun DuplicateFrameIcon(
+    isActive: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Icon(
+        painter = painterResource(id = R.drawable.baseline_content_copy_32),
+        tint = colorResource(id = if (isActive) R.color.is_active else R.color.is_disabled),
+        contentDescription = stringResource(R.string.duplicate_current_frame),
+        modifier = modifier.size(28.dp)
+    )
+}
+
+@Composable
 fun OpenFramesIcon(
+    isActive: Boolean,
     modifier: Modifier = Modifier
 ) {
     Icon(
         painter = painterResource(id = R.drawable.ic_layers_32),
-        tint = colorResource(id = R.color.is_active),
-        contentDescription = stringResource(id = R.string.open_all_frames)
+        tint = colorResource(id = if (isActive) R.color.is_active else R.color.is_disabled),
+        contentDescription = stringResource(id = R.string.open_all_frames),
+        modifier = modifier
     )
 }
 
 @Composable
 fun PauseIcon(
+    isActive: Boolean,
     modifier: Modifier = Modifier
 ) {
     Icon(
         painter = painterResource(id = R.drawable.ic_pause_32),
-        tint = colorResource(id = R.color.is_active),
-        contentDescription = stringResource(R.string.pause_the_animation)
+        tint = colorResource(id = if (isActive) R.color.is_active else R.color.is_disabled),
+        contentDescription = stringResource(R.string.pause_the_animation),
+        modifier = modifier
     )
 }
 
 @Composable
 fun ResumeIcon(
+    isActive: Boolean,
     modifier: Modifier = Modifier
 ) {
     Icon(
-        painter = painterResource(
-            id = R.drawable.ic_resume_32
-        ),
-        tint = colorResource(id = R.color.is_active),
-        contentDescription = stringResource(R.string.resume_the_animation)
+        painter = painterResource(id = R.drawable.ic_resume_32),
+        tint = colorResource(id = if (isActive) R.color.is_active else R.color.is_disabled),
+        contentDescription = stringResource(R.string.resume_the_animation),
+        modifier = modifier
     )
 }

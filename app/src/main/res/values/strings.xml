@@ -17,4 +17,7 @@
     <string name="circle">Circle</string>
     <string name="triangle">Triangle</string>
     <string name="arrow_up">Arrow Up</string>
+    <string name="duplicate_current_frame">Duplicate current frame</string>
+    <string name="delete_this_frame">Delete current frame</string>
+    <string name="delete_all_frames">Delete all frames</string>
 </resources>

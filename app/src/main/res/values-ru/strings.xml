@@ -8,14 +8,17 @@
     <string name="open_all_frames">Открыть все кадры</string>
     <string name="pause_the_animation">Приостановить анимацию</string>
     <string name="resume_the_animation">Продолжить анимацию</string>
-    <string name="choose_pencil">Choose pencil</string>
-    <string name="choose_brush">Choose brush</string>
-    <string name="background_image">background image</string>
-    <string name="choose_eraser">Choose eraser</string>
-    <string name="choose_instruments">Choose instruments</string>
-    <string name="open_all_colors">Open all colors</string>
-    <string name="square">Square</string>
-    <string name="circle">Circle</string>
-    <string name="triangle">Triangle</string>
-    <string name="arrow_up">Arrow Up</string>
+    <string name="choose_pencil">Выбрать карандаш</string>
+    <string name="choose_brush">Выбрать кисть</string>
+    <string name="background_image">Задний фон</string>
+    <string name="choose_eraser">Выбрать стерку</string>
+    <string name="choose_instruments">Выбрать инструменты</string>
+    <string name="open_all_colors">Открыть все цвета</string>
+    <string name="square">Квадрат</string>
+    <string name="circle">Круг</string>
+    <string name="triangle">Треугольник</string>
+    <string name="arrow_up">Стрелка вверх</string>
+    <string name="duplicate_current_frame">Дублировать текущий кадр</string>
+    <string name="delete_this_frame">Удалить текущий кадр</string>
+    <string name="delete_all_frames">Удалить все кадры</string>
 </resources>

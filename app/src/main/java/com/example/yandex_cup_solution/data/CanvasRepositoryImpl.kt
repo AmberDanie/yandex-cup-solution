@@ -21,8 +21,17 @@ class CanvasRepositoryImpl @Inject constructor() : CanvasRepository {
             if (tempList.isNotEmpty()) {
                 tempList.removeLast()
             }
+            val isDuplicate = frame == (_animationFrames.value.lastOrNull() ?: false)
             tempList.add(frame)
-            tempList.add(SnapshotStateList())
+            if (!isDuplicate) {
+                val newList = SnapshotStateList<CanvasFiguresData>()
+                frame.forEach { line ->
+                    newList.add(line)
+                }
+                tempList.add(newList)
+            } else {
+                tempList.add(SnapshotStateList())
+            }
             _animationFrames.update {
                 tempList
             }
