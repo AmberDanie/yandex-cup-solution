@@ -15,6 +15,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.colorResource
 import com.example.yandex_cup_solution.R
 import com.example.yandex_cup_solution.domain.CanvasMode
+import com.example.yandex_cup_solution.domain.ViewModelEvent
 import com.example.yandex_cup_solution.utils.addFigure
 import com.example.yandex_cup_solution.utils.addPath
 import com.example.yandex_cup_solution.utils.drawCircle
@@ -26,13 +27,12 @@ import com.example.yandex_cup_solution.utils.drawTriangle
 fun DrawableCanvas(
     currentMode: CanvasMode,
     lineWidth: Float,
-    cleanStack: () -> Unit,
     chosenColor: Color,
     chosenFigure: CanvasFigure?,
-    onUpdateFrameFigures: (SnapshotStateList<CanvasFiguresData>) -> Unit,
     previousFrame: SnapshotStateList<CanvasFiguresData>,
     currentFrame: SnapshotStateList<CanvasFiguresData>,
     modifier: Modifier = Modifier,
+    onViewModelEvent: (ViewModelEvent) -> Unit,
 ) {
     var tempPath = Path()
 
@@ -53,7 +53,7 @@ fun DrawableCanvas(
                 onDragStart = {
                     tempPath = Path()
                     tempOffset = Offset.Zero
-                    cleanStack()
+                    onViewModelEvent(ViewModelEvent.CleanStack)
                 },
                 onDragEnd = {
                     if (currentFrame.isNotEmpty()) {
@@ -82,7 +82,7 @@ fun DrawableCanvas(
                         CanvasMode.ColorPicker,
                         CanvasMode.Disabled -> { /* IMPOSSIBLE STATE */ }
                     }
-                    onUpdateFrameFigures(currentFrame)
+                    onViewModelEvent(ViewModelEvent.CanvasEvent.UpdateFrames(currentFrame))
                 }
             ) { change, dragAmount ->
 

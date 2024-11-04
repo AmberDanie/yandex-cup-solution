@@ -27,15 +27,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.yandex_cup_solution.R
+import com.example.yandex_cup_solution.domain.ViewModelEvent
 import com.example.yandex_cup_solution.ui.theme.CanvasColors
 
 @Composable
 fun ColorPickerDialog(
-    onDismiss: () -> Unit,
-    onExpand: () -> Unit,
-    chooseColor: (Color) -> Unit,
     isVisible: Boolean,
-    isExpanded: Boolean
+    isExpanded: Boolean,
+    onViewModelEvent: (ViewModelEvent.BottomPanelEvent.ColorPicker) -> Unit
 ) {
     AnimatedVisibility(
         visible = isVisible,
@@ -43,7 +42,7 @@ fun ColorPickerDialog(
         exit = slideOutVertically() + fadeOut()
     ) {
         Dialog(
-            onDismissRequest = onDismiss,
+            onDismissRequest = { onViewModelEvent(ViewModelEvent.BottomPanelEvent.ColorPicker.OpenDialog) },
         ) {
             Box(
                 modifier = Modifier
@@ -60,7 +59,13 @@ fun ColorPickerDialog(
                         if (isExpanded) {
                             ExpandedColorsLayout(
 
-                            ) { color -> chooseColor(color) }
+                            ) { color ->
+                                onViewModelEvent(
+                                    ViewModelEvent.BottomPanelEvent.ColorPicker.ChooseColor(
+                                        color
+                                    )
+                                )
+                            }
                         }
                     }
                     Card(
@@ -69,11 +74,11 @@ fun ColorPickerDialog(
                             .background(Color.Transparent)
                     ) {
                         ColorSelectionLayout(
-                            chooseColor = chooseColor,
                             tintColor = colorResource(id = if (isExpanded) R.color.green else R.color.is_active),
                             modifier = Modifier
                                 .padding(horizontal = 32.dp)
-                                .clickable { onExpand() }
+                                .clickable { onViewModelEvent(ViewModelEvent.BottomPanelEvent.ColorPicker.ExpandDialog) },
+                            onViewModelEvent = onViewModelEvent
                         )
                     }
                 }
@@ -84,7 +89,7 @@ fun ColorPickerDialog(
 
 @Composable
 fun ColorSelectionLayout(
-    chooseColor: (Color) -> Unit,
+    onViewModelEvent: (ViewModelEvent.BottomPanelEvent.ColorPicker) -> Unit,
     tintColor: Color,
     modifier: Modifier = Modifier
 ) {
@@ -111,7 +116,11 @@ fun ColorSelectionLayout(
                 modifier = Modifier
                     .padding(end = 48.dp)
                     .clickable {
-                        chooseColor(color)
+                        onViewModelEvent(
+                            ViewModelEvent.BottomPanelEvent.ColorPicker.ChooseColor(
+                                color
+                            )
+                        )
                     }
             ) {
                 drawCircle(color = color, radius = 16.dp.toPx())

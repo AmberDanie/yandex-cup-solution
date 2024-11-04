@@ -24,7 +24,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,23 +36,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.yandex_cup_solution.R
 import com.example.yandex_cup_solution.domain.CanvasMode
+import com.example.yandex_cup_solution.domain.ViewModelEvent
 
 @Composable
 fun MainScreen(
     uiState: CanvasState,
-    cleanStack: () -> Unit,
-    onFrameInteract: (FrameInteraction) -> Unit,
-    onFrameArrowClick: (ArrowMove) -> Unit,
-    onDeleteClick: (DeleteInteraction) -> Unit,
-    expandDeleteDialog: () -> Unit,
-    onInstrumentsClick: (CanvasFigure?) -> Unit,
-    onPauseResumeClick: (PauseResumeInteraction) -> Unit,
-    onUpdateFrameFigures: (SnapshotStateList<CanvasFiguresData>) -> Unit,
-    updateSliderValue: (CanvasMode, Float) -> Unit,
-    onModeClick: (CanvasMode) -> Unit,
-    onColorPaletteExpand: () -> Unit,
-    chooseColor: (Color) -> Unit,
-    onColorPaletteClick: () -> Unit,
+    onViewModelEvent: (ViewModelEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val currentMode = uiState.currentMode
@@ -64,10 +52,8 @@ fun MainScreen(
                 forwardIsActive = uiState.stackSize > 0 && currentMode !is CanvasMode.Disabled,
                 currentMode = currentMode,
                 backIsActive = uiState.currentFrame.isNotEmpty() && currentMode !is CanvasMode.Disabled,
-                onFrameArrowClick = onFrameArrowClick,
-                onFrameInteract = onFrameInteract,
-                onPauseResumeClick = onPauseResumeClick,
-                modifier = modifier.weight(0.2f)
+                modifier = modifier.weight(0.2f),
+                onViewModelEvent = onViewModelEvent,
             )
             Box(
                 modifier = modifier.weight(1f)
@@ -83,21 +69,18 @@ fun MainScreen(
                         chosenColor = uiState.chosenColor,
                         chosenFigure = uiState.chosenInstrument,
                         lineWidth = uiState.lineWidth,
-                        cleanStack = cleanStack,
-                        onUpdateFrameFigures = onUpdateFrameFigures,
                         previousFrame = uiState.previousFrame,
                         currentFrame = uiState.currentFrame,
-                        modifier = modifier.fillMaxHeight()
+                        modifier = modifier.fillMaxHeight(),
+                        onViewModelEvent = onViewModelEvent,
                     )
                 }
             }
             DrawableBottomPanel(
-                onColorPaletteClick = onColorPaletteClick,
-                onInstrumentsClick = onInstrumentsClick,
-                onModeClick = onModeClick,
                 chosenColor = uiState.chosenColor,
                 currentMode = uiState.currentMode,
-                modifier = modifier.weight(0.2f)
+                modifier = modifier.weight(0.2f),
+                onViewModelEvent = onViewModelEvent,
             )
         }
         if (currentMode !is CanvasMode.Disabled) {
@@ -110,22 +93,20 @@ fun MainScreen(
         }
 
         DeleteDialog(
-            onFrameInteract = onFrameInteract,
+            onFrameInteract = onViewModelEvent,
             isVisible = uiState.deleteDialogIsExpanded)
 
-        BottomPanelSlider(uiState, updateSliderValue)
+        BottomPanelSlider(uiState, onViewModelEvent)
 
         InstrumentsDialog(
             isVisible = uiState.instrumentsIsExpanded,
-            onInstrumentsClick = onInstrumentsClick
+            onViewModelEvent = onViewModelEvent,
         )
 
         ColorPickerDialog(
-            onDismiss = onColorPaletteClick,
-            onExpand = onColorPaletteExpand,
-            chooseColor = chooseColor,
             isVisible = uiState.paletteIsVisible,
-            isExpanded = uiState.paletteIsExpanded
+            isExpanded = uiState.paletteIsExpanded,
+            onViewModelEvent = onViewModelEvent,
         )
     }
 }
@@ -133,7 +114,7 @@ fun MainScreen(
 @Composable
 fun BoxScope.BottomPanelSlider(
     uiState: CanvasState,
-    updateSliderValue: (CanvasMode, Float) -> Unit
+    onViewModelEvent: (ViewModelEvent) -> Unit
 ) {
     Slider(
         value = if (uiState.currentMode is CanvasMode.Disabled) {
@@ -143,7 +124,7 @@ fun BoxScope.BottomPanelSlider(
         },
         onValueChange = { value ->
             val a = value
-            updateSliderValue(uiState.currentMode, value)
+            onViewModelEvent(ViewModelEvent.SliderEvent(value, uiState.currentMode))
         },
         valueRange = 5f..100f,
         colors = SliderDefaults.colors(
@@ -160,7 +141,7 @@ fun BoxScope.BottomPanelSlider(
 
 @Composable
 fun DeleteDialog(
-    onFrameInteract: (FrameInteraction) -> Unit,
+    onFrameInteract: (ViewModelEvent.TopPanelEvent.DeleteFrameEvent) -> Unit,
     isVisible: Boolean,
 ) {
     AnimatedVisibility(
@@ -169,7 +150,7 @@ fun DeleteDialog(
         exit = slideOutVertically() + fadeOut()
     ) {
         Dialog(
-            onDismissRequest = { onFrameInteract(FrameInteraction.Delete(null)) },
+            onDismissRequest = { onFrameInteract(ViewModelEvent.TopPanelEvent.DeleteFrameEvent.OpenDialog) },
         ) {
             Box(
                 modifier = Modifier
@@ -194,7 +175,7 @@ fun DeleteDialog(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                                 .clickable {
-                                    onFrameInteract(FrameInteraction.Delete(DeleteInteraction.DELETE_ONE))
+                                    onFrameInteract(ViewModelEvent.TopPanelEvent.DeleteFrameEvent.DeleteOne)
                                 }
                         )
                         Spacer(modifier = Modifier.height(16.dp))
@@ -205,7 +186,7 @@ fun DeleteDialog(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                                 .clickable {
-                                    onFrameInteract(FrameInteraction.Delete(DeleteInteraction.DELETE_ALL))
+                                    onFrameInteract(ViewModelEvent.TopPanelEvent.DeleteFrameEvent.DeleteAll)
                                 }
                         )
                     }
@@ -218,7 +199,7 @@ fun DeleteDialog(
 @Composable
 fun InstrumentsDialog(
     isVisible: Boolean,
-    onInstrumentsClick: (CanvasFigure?) -> Unit
+    onViewModelEvent: (ViewModelEvent) -> Unit
 ) {
     AnimatedVisibility(
         visible = isVisible,
@@ -226,7 +207,7 @@ fun InstrumentsDialog(
         exit = slideOutVertically() + fadeOut()
     ) {
         Dialog(
-            onDismissRequest = { onInstrumentsClick(null) },
+            onDismissRequest = { onViewModelEvent(ViewModelEvent.BottomPanelEvent.InstrumentsEvent.OpenDialog) },
         ) {
             Box(
                 modifier = Modifier
@@ -239,7 +220,7 @@ fun InstrumentsDialog(
                         .padding(bottom = 100.dp, end = 10.dp)
                         .background(Color.Transparent)
                 ) {
-                    InstrumentsLayout(onInstrumentsClick = onInstrumentsClick)
+                    InstrumentsLayout(onViewModelEvent = onViewModelEvent)
                 }
             }
         }
@@ -249,7 +230,7 @@ fun InstrumentsDialog(
 @Composable
 fun InstrumentsLayout(
     modifier: Modifier = Modifier,
-    onInstrumentsClick: (CanvasFigure?) -> Unit,
+    onViewModelEvent: (ViewModelEvent.BottomPanelEvent.InstrumentsEvent) -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -264,7 +245,7 @@ fun InstrumentsLayout(
             tint = colorResource(id = R.color.is_active),
             contentDescription = stringResource(R.string.square),
             modifier = Modifier.clickable {
-                onInstrumentsClick(CanvasFigure.Square)
+                onViewModelEvent(ViewModelEvent.BottomPanelEvent.InstrumentsEvent.ChooseSquare)
             }
         )
         Icon(painter = painterResource(
@@ -273,7 +254,7 @@ fun InstrumentsLayout(
             tint = colorResource(id = R.color.is_active),
             contentDescription = stringResource(R.string.circle),
             modifier = Modifier.clickable {
-                onInstrumentsClick(CanvasFigure.Circle)
+                onViewModelEvent(ViewModelEvent.BottomPanelEvent.InstrumentsEvent.ChooseCircle)
             }
         )
         Icon(painter = painterResource(
@@ -282,7 +263,7 @@ fun InstrumentsLayout(
             tint = colorResource(id = R.color.is_active),
             contentDescription = stringResource(R.string.triangle),
             modifier = Modifier.clickable {
-                onInstrumentsClick(CanvasFigure.Triangle)
+                onViewModelEvent(ViewModelEvent.BottomPanelEvent.InstrumentsEvent.ChooseTriangle)
             }
         )
         Icon(

@@ -19,15 +19,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.yandex_cup_solution.R
 import com.example.yandex_cup_solution.domain.CanvasMode
+import com.example.yandex_cup_solution.domain.ViewModelEvent
 
 @Composable
 fun DrawableBottomPanel(
-    onColorPaletteClick: () -> Unit,
-    onInstrumentsClick: (CanvasFigure?) -> Unit,
     chosenColor: Color,
-    onModeClick: (CanvasMode) -> Unit,
     currentMode: CanvasMode,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onViewModelEvent: (ViewModelEvent) -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.Center,
@@ -40,7 +39,7 @@ fun DrawableBottomPanel(
             tintColor = iconTintColor(currentMode, CanvasMode.PaintMode.Pencil),
             modifier = Modifier.clickable {
                 if (currentMode !is CanvasMode.Disabled) {
-                    onModeClick(CanvasMode.PaintMode.Pencil)
+                    onViewModelEvent(ViewModelEvent.BottomPanelEvent.PencilEvent)
                 }
             }
         )
@@ -49,7 +48,7 @@ fun DrawableBottomPanel(
             tintColor = iconTintColor(currentMode, CanvasMode.PaintMode.Brush),
             modifier = Modifier.clickable {
                 if (currentMode !is CanvasMode.Disabled) {
-                    onModeClick(CanvasMode.PaintMode.Brush)
+                    onViewModelEvent(ViewModelEvent.BottomPanelEvent.BrushEvent)
                 }
             }
         )
@@ -58,7 +57,7 @@ fun DrawableBottomPanel(
             tintColor = iconTintColor(currentMode, CanvasMode.PaintMode.Eraser),
             modifier = Modifier.clickable {
                 if (currentMode !is CanvasMode.Disabled) {
-                    onModeClick(CanvasMode.PaintMode.Eraser)
+                    onViewModelEvent(ViewModelEvent.BottomPanelEvent.EraserEvent)
                 }
             }
         )
@@ -67,8 +66,7 @@ fun DrawableBottomPanel(
             tintColor = iconTintColor(currentMode, CanvasMode.Instruments),
             modifier = Modifier.clickable {
                 if (currentMode !is CanvasMode.Disabled) {
-                    onModeClick(CanvasMode.Instruments)
-                    onInstrumentsClick(null)
+                    onViewModelEvent(ViewModelEvent.BottomPanelEvent.InstrumentsEvent.OpenDialog)
                 }
             }
         )
@@ -79,8 +77,7 @@ fun DrawableBottomPanel(
             isCurrentMode = currentMode == CanvasMode.ColorPicker,
             modifier = Modifier.clickable {
                 if (currentMode !is CanvasMode.Disabled) {
-                    onModeClick(CanvasMode.ColorPicker)
-                    onColorPaletteClick()
+                    onViewModelEvent(ViewModelEvent.BottomPanelEvent.ColorPicker.OpenDialog)
                 }
             }
         )

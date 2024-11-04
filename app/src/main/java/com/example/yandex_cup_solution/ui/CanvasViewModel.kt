@@ -8,53 +8,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.yandex_cup_solution.data.CanvasRepository
 import com.example.yandex_cup_solution.domain.CanvasMode
+import com.example.yandex_cup_solution.domain.ViewModelEvent
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Stack
-
-data class CanvasState(
-    val paletteIsVisible: Boolean = false,
-    val paletteIsExpanded: Boolean = false,
-    val instrumentsIsExpanded: Boolean = false,
-    val deleteDialogIsExpanded: Boolean = false,
-    val chosenInstrument: CanvasFigure? = null,
-    val chosenColor: Color = Color(0xFF1976D2),
-    val currentMode: CanvasMode = CanvasMode.PaintMode.Pencil,
-    val lineWidth: Float = 50f,
-    val animationSpeed: Long = 1000,
-    val currentFrame: SnapshotStateList<CanvasFiguresData> = SnapshotStateList(),
-    val previousFrame: SnapshotStateList<CanvasFiguresData> = SnapshotStateList(),
-    val allFrames: List<SnapshotStateList<CanvasFiguresData>> = listOf(),
-    val stackSize: Int = 0
-) {
-    companion object {
-        val EMPTY = CanvasState()
-    }
-}
-
-enum class ArrowMove {
-    BACK, FORWARD
-}
-
-sealed interface FrameInteraction {
-    class Delete(val deleteInteraction: DeleteInteraction?) : FrameInteraction
-    data object Add : FrameInteraction
-    data object Duplicate : FrameInteraction
-}
-
-enum class PauseResumeInteraction {
-    PAUSE, RESUME
-}
-
-enum class DeleteInteraction {
-    DELETE_ONE, DELETE_ALL
-}
 
 class CanvasViewModel @AssistedInject constructor(
     @Assisted savedStateHandle: SavedStateHandle,
@@ -84,8 +49,104 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
-    fun expandDeleteDialog() {
+    fun onEvent(viewModelEvent: ViewModelEvent) {
         viewModelScope.launch {
+            when (viewModelEvent) {
+                is ViewModelEvent.CleanStack -> cleanStack()
+                is ViewModelEvent.SliderEvent -> sliderValueUpdate(
+                    viewModelEvent.mode,
+                    viewModelEvent.width
+                )
+
+                is ViewModelEvent.CanvasEvent -> canvasEvents(viewModelEvent)
+                is ViewModelEvent.BottomPanelEvent -> bottomPanelEvents(viewModelEvent)
+                is ViewModelEvent.TopPanelEvent -> topPanelEvents(viewModelEvent)
+            }
+        }
+    }
+
+    private suspend fun canvasEvents(viewModelEvent: ViewModelEvent.CanvasEvent) {
+        withContext(Dispatchers.IO) {
+            when (viewModelEvent) {
+                is ViewModelEvent.CanvasEvent.UpdateFrames -> onUpdateFrameFigures(viewModelEvent.frame)
+            }
+        }
+    }
+
+    private suspend fun bottomPanelEvents(viewModelEvent: ViewModelEvent.BottomPanelEvent) {
+        withContext(Dispatchers.IO) {
+            when (viewModelEvent) {
+                is ViewModelEvent.BottomPanelEvent.PencilEvent -> updateCurrentMode(CanvasMode.PaintMode.Pencil)
+                is ViewModelEvent.BottomPanelEvent.BrushEvent -> updateCurrentMode(CanvasMode.PaintMode.Brush)
+                is ViewModelEvent.BottomPanelEvent.EraserEvent -> updateCurrentMode(CanvasMode.PaintMode.Eraser)
+                is ViewModelEvent.BottomPanelEvent.InstrumentsEvent -> instrumentsEvents(
+                    viewModelEvent
+                )
+
+                is ViewModelEvent.BottomPanelEvent.ColorPicker -> colorPickerEvents(viewModelEvent)
+            }
+        }
+    }
+
+    private suspend fun topPanelEvents(viewModelEvent: ViewModelEvent.TopPanelEvent) {
+        withContext(Dispatchers.IO) {
+            when (viewModelEvent) {
+                is ViewModelEvent.TopPanelEvent.BackArrow -> undoPrevious()
+                is ViewModelEvent.TopPanelEvent.ForwardArrow -> returnPrevious()
+                is ViewModelEvent.TopPanelEvent.DeleteFrameEvent -> deleteEvents(viewModelEvent)
+                is ViewModelEvent.TopPanelEvent.AddFrame -> addFrame()
+                is ViewModelEvent.TopPanelEvent.DuplicateFrame -> duplicateCurrentFrame()
+                ViewModelEvent.TopPanelEvent.Pause -> onPause()
+                ViewModelEvent.TopPanelEvent.Resume -> onResume()
+            }
+        }
+    }
+
+    private suspend fun deleteEvents(viewModelEvent: ViewModelEvent.TopPanelEvent.DeleteFrameEvent) {
+        withContext(Dispatchers.IO) {
+            when (viewModelEvent) {
+                is ViewModelEvent.TopPanelEvent.DeleteFrameEvent.DeleteAll -> deleteAllFrames()
+                is ViewModelEvent.TopPanelEvent.DeleteFrameEvent.DeleteOne -> deleteFrame()
+                is ViewModelEvent.TopPanelEvent.DeleteFrameEvent.OpenDialog -> expandDeleteDialog()
+            }
+        }
+    }
+
+    private suspend fun instrumentsEvents(viewModelEvent: ViewModelEvent.BottomPanelEvent.InstrumentsEvent) {
+        withContext(Dispatchers.IO) {
+            updateCurrentMode(CanvasMode.Instruments)
+
+            when (viewModelEvent) {
+                is ViewModelEvent.BottomPanelEvent.InstrumentsEvent.OpenDialog -> onInstrumentsClick()
+                is ViewModelEvent.BottomPanelEvent.InstrumentsEvent.ChooseSquare -> onInstrumentsClick(
+                    CanvasFigure.Square
+                )
+
+                is ViewModelEvent.BottomPanelEvent.InstrumentsEvent.ChooseCircle -> onInstrumentsClick(
+                    CanvasFigure.Circle
+                )
+
+                is ViewModelEvent.BottomPanelEvent.InstrumentsEvent.ChooseTriangle -> onInstrumentsClick(
+                    CanvasFigure.Triangle
+                )
+            }
+        }
+    }
+
+    private suspend fun colorPickerEvents(viewModelEvent: ViewModelEvent.BottomPanelEvent.ColorPicker) {
+        withContext(Dispatchers.IO) {
+            when (viewModelEvent) {
+                is ViewModelEvent.BottomPanelEvent.ColorPicker.OpenDialog -> onColorPaletteClick()
+                is ViewModelEvent.BottomPanelEvent.ColorPicker.ExpandDialog -> onColorPaletteExpand()
+                is ViewModelEvent.BottomPanelEvent.ColorPicker.ChooseColor -> chooseColor(
+                    viewModelEvent.color
+                )
+            }
+        }
+    }
+
+    private suspend fun expandDeleteDialog() {
+        withContext(Dispatchers.IO) {
             _uiState.update {
                 it.copy(
                     deleteDialogIsExpanded = !it.deleteDialogIsExpanded
@@ -94,17 +155,8 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
-    fun onDeleteClick(deleteInteraction: DeleteInteraction?) {
-        when (deleteInteraction) {
-            DeleteInteraction.DELETE_ONE -> deleteFrame()
-            DeleteInteraction.DELETE_ALL -> deleteAllFrames()
-            null -> {}
-        }
-        expandDeleteDialog()
-    }
-
-    fun sliderValueUpdate(mode: CanvasMode, width: Float) {
-        viewModelScope.launch {
+    private suspend fun sliderValueUpdate(mode: CanvasMode, width: Float) {
+        withContext(Dispatchers.IO) {
             when (mode) {
                 is CanvasMode.Disabled -> updateAnimationSpeed(width)
                 else -> updateLineWidth(width)
@@ -112,8 +164,8 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
-    private fun updateAnimationSpeed(width: Float) {
-        viewModelScope.launch {
+    private suspend fun updateAnimationSpeed(width: Float) {
+        withContext(Dispatchers.IO) {
             _uiState.update {
                 it.copy(
                     animationSpeed = ((100 - width) * (1000 / 50)).toLong()
@@ -122,15 +174,8 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
-    fun interactPauseAndPlay(pauseResumeInteraction: PauseResumeInteraction) {
-        when (pauseResumeInteraction) {
-            PauseResumeInteraction.PAUSE -> onPause()
-            PauseResumeInteraction.RESUME -> onResume()
-        }
-    }
-
-    private fun onPause() {
-        viewModelScope.launch {
+    private suspend fun onPause() {
+        withContext(Dispatchers.IO) {
             _uiState.update {
                 it.copy(
                     currentMode = lastChosenMode.value,
@@ -140,8 +185,8 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
-    private fun onResume() {
-        viewModelScope.launch {
+    private suspend fun onResume() {
+        withContext(Dispatchers.IO) {
             lastChosenMode.update {
                 _uiState.value.currentMode
             }
@@ -153,7 +198,7 @@ class CanvasViewModel @AssistedInject constructor(
             while (_uiState.value.currentMode is CanvasMode.Disabled) {
                 _uiState.value.allFrames.forEach { frame ->
                     if (_uiState.value.currentMode !is CanvasMode.Disabled) {
-                        return@launch
+                        return@withContext
                     }
                     _uiState.update {
                         it.copy(
@@ -166,45 +211,36 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
-    fun interactFrames(frameInteraction: FrameInteraction) {
-        viewModelScope.launch {
-            when (frameInteraction) {
-                is FrameInteraction.Delete -> onDeleteClick(frameInteraction.deleteInteraction)
-                is FrameInteraction.Add -> addFrame()
-                is FrameInteraction.Duplicate -> duplicateCurrentFrame()
-            }
-            cleanStack()
-        }
-    }
-
-    private fun duplicateCurrentFrame() {
-        viewModelScope.launch {
+    private suspend fun duplicateCurrentFrame() {
+        withContext(Dispatchers.IO) {
             val currentFrame = _uiState.value.currentFrame.toMutableStateList()
             canvasRepository.addAnimationFrame(currentFrame)
         }
     }
 
-    private fun deleteFrame() {
-        viewModelScope.launch {
+    private suspend fun deleteFrame() {
+        withContext(Dispatchers.IO) {
             canvasRepository.deleteAnimationFrame()
+            expandDeleteDialog()
         }
     }
 
-    private fun deleteAllFrames() {
-        viewModelScope.launch {
+    private suspend fun deleteAllFrames() {
+        withContext(Dispatchers.IO) {
             canvasRepository.deleteAllFrames()
+            expandDeleteDialog()
         }
     }
 
-    private fun addFrame() {
-        viewModelScope.launch {
+    private suspend fun addFrame() {
+        withContext(Dispatchers.IO) {
             val currentFrame = _uiState.value.currentFrame
             canvasRepository.addAnimationFrame(currentFrame)
         }
     }
 
-    fun cleanStack() {
-        viewModelScope.launch {
+    private suspend fun cleanStack() {
+        withContext(Dispatchers.IO) {
             removedFrames.clear()
             _uiState.update {
                 it.copy(
@@ -214,40 +250,35 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
-    fun onFrameArrowClick(direction: ArrowMove) {
-        viewModelScope.launch {
-            when (direction) {
-                ArrowMove.BACK -> undoPrevious()
-                ArrowMove.FORWARD -> returnPrevious()
+    private suspend fun undoPrevious() {
+        withContext(Dispatchers.IO) {
+            val tempList = _uiState.value.currentFrame
+            val lastElement = tempList.removeLast()
+            removedFrames.add(lastElement)
+            _uiState.update {
+                it.copy(
+                    currentFrame = tempList,
+                    stackSize = removedFrames.size
+                )
             }
         }
     }
 
-    private fun undoPrevious() {
-        val tempList = _uiState.value.currentFrame
-        val lastElement = tempList.removeLast()
-        removedFrames.add(lastElement)
-        _uiState.update {
-            it.copy(
-                currentFrame = tempList,
-                stackSize = removedFrames.size
-            )
+    private suspend fun returnPrevious() {
+        withContext(Dispatchers.IO) {
+            val tempList = _uiState.value.currentFrame
+            tempList.add(removedFrames.removeLast())
+            _uiState.update {
+                it.copy(
+                    currentFrame = tempList,
+                    stackSize = removedFrames.size
+                )
+            }
         }
     }
 
-    private fun returnPrevious() {
-        val tempList = _uiState.value.currentFrame
-        tempList.add(removedFrames.removeLast())
-        _uiState.update {
-            it.copy(
-                currentFrame = tempList,
-                stackSize = removedFrames.size
-            )
-        }
-    }
-
-    fun onInstrumentsClick(figure: CanvasFigure? = null) {
-        viewModelScope.launch {
+    private suspend fun onInstrumentsClick(figure: CanvasFigure? = null) {
+        withContext(Dispatchers.IO) {
             _uiState.update {
                 it.copy(
                     instrumentsIsExpanded = !it.instrumentsIsExpanded,
@@ -257,8 +288,8 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
-    fun onUpdateFrameFigures(list: SnapshotStateList<CanvasFiguresData>) {
-        viewModelScope.launch {
+    private suspend fun onUpdateFrameFigures(list: SnapshotStateList<CanvasFiguresData>) {
+        withContext(Dispatchers.IO) {
             _uiState.update {
                 it.copy(
                     currentFrame = list
@@ -267,8 +298,8 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
-    private fun updateLineWidth(width: Float) {
-        viewModelScope.launch {
+    private suspend fun updateLineWidth(width: Float) {
+        withContext(Dispatchers.IO) {
             _uiState.update {
                 it.copy(
                     lineWidth = width
@@ -277,8 +308,8 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
-    fun onColorPaletteClick() {
-        viewModelScope.launch {
+    private suspend fun onColorPaletteClick() {
+        withContext(Dispatchers.IO) {
             _uiState.update {
                 it.copy(
                     paletteIsVisible = !it.paletteIsVisible,
@@ -298,8 +329,8 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
-    fun onColorPaletteExpand() {
-        viewModelScope.launch {
+    private suspend fun onColorPaletteExpand() {
+        withContext(Dispatchers.IO) {
             _uiState.update {
                 it.copy(
                     paletteIsExpanded = !it.paletteIsExpanded
@@ -308,8 +339,8 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
-    fun chooseColor(color: Color) {
-        viewModelScope.launch {
+    private suspend fun chooseColor(color: Color) {
+        withContext(Dispatchers.IO) {
             _uiState.update {
                 it.copy(
                     chosenColor = color
@@ -319,8 +350,8 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
-    fun updateCurrentMode(newMode: CanvasMode) {
-        viewModelScope.launch {
+    private suspend fun updateCurrentMode(newMode: CanvasMode) {
+        withContext(Dispatchers.IO) {
             if (newMode != CanvasMode.ColorPicker) {
                 lastChosenMode.update {
                     newMode

@@ -42,19 +42,7 @@ class MainActivity : ComponentActivity() {
 
                         MainScreen(
                             uiState = uiState.value,
-                            cleanStack = { canvasViewModel.cleanStack() },
-                            onPauseResumeClick = { interaction -> canvasViewModel.interactPauseAndPlay(interaction) },
-                            onFrameInteract = { interaction -> canvasViewModel.interactFrames(interaction) },
-                            onFrameArrowClick = { direction -> canvasViewModel.onFrameArrowClick(direction) },
-                            onDeleteClick = { deleteInteraction ->  canvasViewModel.onDeleteClick(deleteInteraction) },
-                            expandDeleteDialog = { canvasViewModel.expandDeleteDialog() },
-                            onInstrumentsClick = { figure -> canvasViewModel.onInstrumentsClick(figure) },
-                            onUpdateFrameFigures = { newList -> canvasViewModel.onUpdateFrameFigures(newList) },
-                            updateSliderValue = { mode, width -> canvasViewModel.sliderValueUpdate(mode, width) },
-                            onModeClick = { mode -> canvasViewModel.updateCurrentMode(mode) },
-                            onColorPaletteClick = { canvasViewModel.onColorPaletteClick() },
-                            onColorPaletteExpand = { canvasViewModel.onColorPaletteExpand() },
-                            chooseColor = { colorRes -> canvasViewModel.chooseColor(colorRes) },
+                            onViewModelEvent = { event -> canvasViewModel.onEvent(event) },
                             modifier = Modifier.background(MaterialTheme.colorScheme.background)
                         )
                     }

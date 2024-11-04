@@ -18,16 +18,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.yandex_cup_solution.R
 import com.example.yandex_cup_solution.domain.CanvasMode
+import com.example.yandex_cup_solution.domain.ViewModelEvent
 
 @Composable
 fun DrawableTopPanel(
     modifier: Modifier = Modifier,
     currentMode: CanvasMode,
-    onFrameInteract: (FrameInteraction) -> Unit,
-    onFrameArrowClick: (ArrowMove) -> Unit,
-    onPauseResumeClick: (PauseResumeInteraction) -> Unit,
     forwardIsActive: Boolean,
-    backIsActive: Boolean
+    backIsActive: Boolean,
+    onViewModelEvent: (ViewModelEvent.TopPanelEvent) -> Unit
 ) {
     val isNotResuming = currentMode !is CanvasMode.Disabled
 
@@ -45,7 +44,7 @@ fun DrawableTopPanel(
                 isActive = backIsActive,
                 modifier = Modifier.clickable {
                     if (backIsActive && isNotResuming) {
-                        onFrameArrowClick(ArrowMove.BACK)
+                        onViewModelEvent(ViewModelEvent.TopPanelEvent.BackArrow)
                     }
                 }
             )
@@ -54,7 +53,7 @@ fun DrawableTopPanel(
                 isActive = forwardIsActive,
                 modifier = Modifier.clickable {
                     if (forwardIsActive && isNotResuming) {
-                        onFrameArrowClick(ArrowMove.FORWARD)
+                        onViewModelEvent(ViewModelEvent.TopPanelEvent.ForwardArrow)
                     }
                 }
             )
@@ -66,7 +65,7 @@ fun DrawableTopPanel(
                 isActive = isNotResuming,
                 modifier = Modifier.clickable {
                     if (isNotResuming) {
-                        onFrameInteract(FrameInteraction.Delete(null))
+                        onViewModelEvent(ViewModelEvent.TopPanelEvent.DeleteFrameEvent.OpenDialog)
                     }
                 }
             )
@@ -75,7 +74,7 @@ fun DrawableTopPanel(
                 isActive = isNotResuming,
                 modifier = Modifier.clickable {
                     if (isNotResuming) {
-                        onFrameInteract(FrameInteraction.Add)
+                        onViewModelEvent(ViewModelEvent.TopPanelEvent.AddFrame)
                     }
                 }
             )
@@ -84,7 +83,7 @@ fun DrawableTopPanel(
                 isActive = isNotResuming,
                 modifier = Modifier.clickable {
                     if (isNotResuming) {
-                        onFrameInteract(FrameInteraction.Duplicate)
+                        onViewModelEvent(ViewModelEvent.TopPanelEvent.DuplicateFrame)
                     }
                 }
             )
@@ -98,7 +97,7 @@ fun DrawableTopPanel(
                 isActive = !isNotResuming,
                 modifier = Modifier.clickable {
                     if (!isNotResuming) {
-                        onPauseResumeClick(PauseResumeInteraction.PAUSE)
+                        onViewModelEvent(ViewModelEvent.TopPanelEvent.Pause)
                     }
                 })
             Spacer(modifier = Modifier.width(16.dp))
@@ -106,7 +105,7 @@ fun DrawableTopPanel(
                 isActive = isNotResuming,
                 modifier = Modifier.clickable {
                     if (isNotResuming) {
-                        onPauseResumeClick(PauseResumeInteraction.RESUME)
+                        onViewModelEvent(ViewModelEvent.TopPanelEvent.Resume)
                     }
                 }
             )
