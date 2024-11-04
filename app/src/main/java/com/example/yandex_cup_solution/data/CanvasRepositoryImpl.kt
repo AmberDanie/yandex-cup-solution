@@ -53,6 +53,12 @@ class CanvasRepositoryImpl @Inject constructor() : CanvasRepository {
         }
     }
 
+    override suspend fun deleteAllFrames() {
+        withContext(Dispatchers.IO) {
+            _animationFrames.update { listOf(SnapshotStateList()) }
+        }
+    }
+
     override fun getAnimationFrames(): Flow<List<SnapshotStateList<CanvasFiguresData>>> {
         return _animationFrames
     }

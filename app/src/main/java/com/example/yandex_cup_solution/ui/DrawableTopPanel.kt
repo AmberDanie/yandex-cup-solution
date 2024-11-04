@@ -66,7 +66,7 @@ fun DrawableTopPanel(
                 isActive = isNotResuming,
                 modifier = Modifier.clickable {
                     if (isNotResuming) {
-                        onFrameInteract(FrameInteraction.DELETE)
+                        onFrameInteract(FrameInteraction.Delete(null))
                     }
                 }
             )
@@ -75,7 +75,7 @@ fun DrawableTopPanel(
                 isActive = isNotResuming,
                 modifier = Modifier.clickable {
                     if (isNotResuming) {
-                        onFrameInteract(FrameInteraction.ADD)
+                        onFrameInteract(FrameInteraction.Add)
                     }
                 }
             )
@@ -84,7 +84,7 @@ fun DrawableTopPanel(
                 isActive = isNotResuming,
                 modifier = Modifier.clickable {
                     if (isNotResuming) {
-                        onFrameInteract(FrameInteraction.DUPLICATE)
+                        onFrameInteract(FrameInteraction.Duplicate)
                     }
                 }
             )

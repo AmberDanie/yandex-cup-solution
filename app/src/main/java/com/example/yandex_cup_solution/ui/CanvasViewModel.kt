@@ -22,6 +22,7 @@ data class CanvasState(
     val paletteIsVisible: Boolean = false,
     val paletteIsExpanded: Boolean = false,
     val instrumentsIsExpanded: Boolean = false,
+    val deleteDialogIsExpanded: Boolean = false,
     val chosenInstrument: CanvasFigure? = null,
     val chosenColor: Color = Color(0xFF1976D2),
     val currentMode: CanvasMode = CanvasMode.PaintMode.Pencil,
@@ -41,12 +42,18 @@ enum class ArrowMove {
     BACK, FORWARD
 }
 
-enum class FrameInteraction {
-    DELETE, ADD, DUPLICATE
+sealed interface FrameInteraction {
+    class Delete(val deleteInteraction: DeleteInteraction?) : FrameInteraction
+    data object Add : FrameInteraction
+    data object Duplicate : FrameInteraction
 }
 
 enum class PauseResumeInteraction {
     PAUSE, RESUME
+}
+
+enum class DeleteInteraction {
+    DELETE_ONE, DELETE_ALL
 }
 
 class CanvasViewModel @AssistedInject constructor(
@@ -77,10 +84,31 @@ class CanvasViewModel @AssistedInject constructor(
         }
     }
 
+    fun expandDeleteDialog() {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    deleteDialogIsExpanded = !it.deleteDialogIsExpanded
+                )
+            }
+        }
+    }
+
+    fun onDeleteClick(deleteInteraction: DeleteInteraction?) {
+        when (deleteInteraction) {
+            DeleteInteraction.DELETE_ONE -> deleteFrame()
+            DeleteInteraction.DELETE_ALL -> deleteAllFrames()
+            null -> {}
+        }
+        expandDeleteDialog()
+    }
+
     fun sliderValueUpdate(mode: CanvasMode, width: Float) {
-        when (mode) {
-            is CanvasMode.Disabled -> updateAnimationSpeed(width)
-            else -> updateLineWidth(width)
+        viewModelScope.launch {
+            when (mode) {
+                is CanvasMode.Disabled -> updateAnimationSpeed(width)
+                else -> updateLineWidth(width)
+            }
         }
     }
 
@@ -141,9 +169,9 @@ class CanvasViewModel @AssistedInject constructor(
     fun interactFrames(frameInteraction: FrameInteraction) {
         viewModelScope.launch {
             when (frameInteraction) {
-                FrameInteraction.DELETE -> deleteFrame()
-                FrameInteraction.ADD -> addFrame()
-                FrameInteraction.DUPLICATE -> duplicateCurrentFrame()
+                is FrameInteraction.Delete -> onDeleteClick(frameInteraction.deleteInteraction)
+                is FrameInteraction.Add -> addFrame()
+                is FrameInteraction.Duplicate -> duplicateCurrentFrame()
             }
             cleanStack()
         }
@@ -159,6 +187,12 @@ class CanvasViewModel @AssistedInject constructor(
     private fun deleteFrame() {
         viewModelScope.launch {
             canvasRepository.deleteAnimationFrame()
+        }
+    }
+
+    private fun deleteAllFrames() {
+        viewModelScope.launch {
+            canvasRepository.deleteAllFrames()
         }
     }
 

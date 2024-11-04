@@ -44,6 +44,8 @@ fun MainScreen(
     cleanStack: () -> Unit,
     onFrameInteract: (FrameInteraction) -> Unit,
     onFrameArrowClick: (ArrowMove) -> Unit,
+    onDeleteClick: (DeleteInteraction) -> Unit,
+    expandDeleteDialog: () -> Unit,
     onInstrumentsClick: (CanvasFigure?) -> Unit,
     onPauseResumeClick: (PauseResumeInteraction) -> Unit,
     onUpdateFrameFigures: (SnapshotStateList<CanvasFiguresData>) -> Unit,
@@ -52,7 +54,7 @@ fun MainScreen(
     onColorPaletteExpand: () -> Unit,
     chooseColor: (Color) -> Unit,
     onColorPaletteClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val currentMode = uiState.currentMode
 
@@ -75,8 +77,7 @@ fun MainScreen(
                         frame = uiState.currentFrame,
                         modifier = modifier.fillMaxHeight()
                     )
-                }
-                else {
+                } else {
                     DrawableCanvas(
                         currentMode = currentMode,
                         chosenColor = uiState.chosenColor,
@@ -108,6 +109,10 @@ fun MainScreen(
             )
         }
 
+        DeleteDialog(
+            onFrameInteract = onFrameInteract,
+            isVisible = uiState.deleteDialogIsExpanded)
+
         BottomPanelSlider(uiState, updateSliderValue)
 
         InstrumentsDialog(
@@ -132,14 +137,14 @@ fun BoxScope.BottomPanelSlider(
 ) {
     Slider(
         value = if (uiState.currentMode is CanvasMode.Disabled) {
-            (103f - uiState.animationSpeed.toFloat() * (5f/100f))
+            (103f - uiState.animationSpeed.toFloat() * (5f / 100f))
         } else {
             uiState.lineWidth
         },
         onValueChange = { value ->
             val a = value
             updateSliderValue(uiState.currentMode, value)
-                        },
+        },
         valueRange = 5f..100f,
         colors = SliderDefaults.colors(
             thumbColor = colorResource(id = R.color.white),
@@ -155,15 +160,16 @@ fun BoxScope.BottomPanelSlider(
 
 @Composable
 fun DeleteDialog(
+    onFrameInteract: (FrameInteraction) -> Unit,
     isVisible: Boolean,
 ) {
     AnimatedVisibility(
-        visible = false,
+        visible = isVisible,
         enter = slideInVertically() + fadeIn(),
         exit = slideOutVertically() + fadeOut()
     ) {
         Dialog(
-            onDismissRequest = {},
+            onDismissRequest = { onFrameInteract(FrameInteraction.Delete(null)) },
         ) {
             Box(
                 modifier = Modifier
@@ -187,7 +193,10 @@ fun DeleteDialog(
                             fontSize = 28.sp,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
-                            )
+                                .clickable {
+                                    onFrameInteract(FrameInteraction.Delete(DeleteInteraction.DELETE_ONE))
+                                }
+                        )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = stringResource(R.string.delete_all_frames),
@@ -195,6 +204,9 @@ fun DeleteDialog(
                             fontSize = 28.sp,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
+                                .clickable {
+                                    onFrameInteract(FrameInteraction.Delete(DeleteInteraction.DELETE_ALL))
+                                }
                         )
                     }
                 }
@@ -247,7 +259,8 @@ fun InstrumentsLayout(
             .padding(16.dp)
     ) {
         Icon(painter = painterResource(
-            id = R.drawable.ic_square_24),
+            id = R.drawable.ic_square_24
+        ),
             tint = colorResource(id = R.color.is_active),
             contentDescription = stringResource(R.string.square),
             modifier = Modifier.clickable {
@@ -255,7 +268,8 @@ fun InstrumentsLayout(
             }
         )
         Icon(painter = painterResource(
-            id = R.drawable.ic_circle_24),
+            id = R.drawable.ic_circle_24
+        ),
             tint = colorResource(id = R.color.is_active),
             contentDescription = stringResource(R.string.circle),
             modifier = Modifier.clickable {
@@ -263,15 +277,18 @@ fun InstrumentsLayout(
             }
         )
         Icon(painter = painterResource(
-            id = R.drawable.ic_triangle_24),
+            id = R.drawable.ic_triangle_24
+        ),
             tint = colorResource(id = R.color.is_active),
             contentDescription = stringResource(R.string.triangle),
             modifier = Modifier.clickable {
                 onInstrumentsClick(CanvasFigure.Triangle)
             }
         )
-        Icon(painter = painterResource(
-            id = R.drawable.ic_arrow_up_24),
+        Icon(
+            painter = painterResource(
+                id = R.drawable.ic_arrow_up_24
+            ),
             tint = colorResource(id = R.color.is_disabled),
             contentDescription = stringResource(R.string.arrow_up)
         )

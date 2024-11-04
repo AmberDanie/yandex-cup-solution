@@ -7,5 +7,6 @@ import kotlinx.coroutines.flow.Flow
 interface CanvasRepository {
     fun getAnimationFrames(): Flow<List<SnapshotStateList<CanvasFiguresData>>>
     suspend fun deleteAnimationFrame()
+    suspend fun deleteAllFrames()
     suspend fun addAnimationFrame(frame: SnapshotStateList<CanvasFiguresData>)
 }
