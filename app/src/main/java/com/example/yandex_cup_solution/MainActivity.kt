@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
         val canvasViewModelFactory = activityComponent!!.canvasViewModelFactory
 
         setContent {
-            Yandex_cup_solutionTheme(darkTheme = true) {
+            Yandex_cup_solutionTheme {
                 NavHost(navController = rememberNavController(), startDestination = "main") {
                     composable("main") { navBackStackEntry ->
                         val canvasViewModel =
