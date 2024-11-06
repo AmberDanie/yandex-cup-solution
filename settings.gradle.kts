@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "yandex_cup_solution"
+rootProject.name = "yandex-cup-solution"
 include(":app")
  
