@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Yandex Cup Solution</string>
+    <string name="app_name">yandex_cup_solution</string>
     <string name="undo_previous_action">Undo the previous action</string>
     <string name="return_cancelled_action">Return cancelled action</string>
     <string name="delete_current_frame">Delete current frame</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Yandex Cup Solution</string>
+    <string name="app_name">yandex_cup_solution</string>
     <string name="undo_previous_action">Отменить предыдущее действие</string>
     <string name="return_cancelled_action">Вернуть отмененное действие</string>
     <string name="delete_current_frame">Удалить текущий кадр</string>
